@@ -1,0 +1,30 @@
+# Build outputs
+**/bin/
+**/obj/
+/publish/
+/publish_new/
+/keygen/
+.vs/
+# Local data and secrets
+_private/
+**/_private/
+settings.json
+appsettings.json
+*.key
+*.pem
+*.pfx
+*.p12
+*.state
+.env
+.env.*
+log/
+logs/
+cache/
+samples*/
+*.pdf
+*.csv
+*.log
+*.user
+*.suo
+release/
+artifacts/

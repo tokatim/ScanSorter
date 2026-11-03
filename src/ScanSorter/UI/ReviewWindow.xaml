@@ -1,0 +1,95 @@
+<Window x:Class="ScanSorter.UI.ReviewWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Проверка номеров" Width="1040" Height="820" MinWidth="820" MinHeight="600"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Background="{StaticResource Surface}"
+        PreviewKeyDown="Window_PreviewKeyDown">
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- переключение между файлами -->
+        <Border Grid.Row="0" Background="White" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,8">
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                    <Button x:Name="PrevItemButton" Content="◀  Предыдущий" Click="PrevItem_Click" Focusable="False" ToolTip="Ctrl + ←"/>
+                    <TextBlock x:Name="CounterText" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" Margin="10,0,16,0" MinWidth="64" TextAlignment="Center" Text="1 / 1"/>
+                    <Button x:Name="NextItemButton" Content="Следующий  ▶" Click="NextItem_Click" Focusable="False" ToolTip="Ctrl + →"/>
+                </StackPanel>
+                <TextBlock x:Name="LeftText" DockPanel.Dock="Right" VerticalAlignment="Center" Foreground="{StaticResource TextMuted}" Margin="12,0,0,0"/>
+                <TextBlock x:Name="FileNameText" VerticalAlignment="Center" FontSize="15" FontWeight="SemiBold" Margin="18,0,0,0" TextTrimming="CharacterEllipsis"/>
+            </DockPanel>
+        </Border>
+
+        <TextBlock x:Name="MessageText" Grid.Row="1" TextWrapping="Wrap" Margin="0,0,0,8" FontSize="14"/>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="270"/>
+            </Grid.ColumnDefinitions>
+
+            <Border Grid.Column="0" BorderBrush="{StaticResource Border}" BorderThickness="1" Background="White" Margin="0,0,10,0">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="6">
+                        <Button Content="◀" Width="34" Click="PrevPage_Click" Focusable="False"/>
+                        <TextBlock x:Name="PageLabel" VerticalAlignment="Center" Margin="4,0,10,0" Text="Страница 1"/>
+                        <Button Content="▶" Width="34" Click="NextPage_Click" Focusable="False"/>
+                        <TextBlock Text="Масштаб" VerticalAlignment="Center" Margin="18,0,6,0"/>
+                        <Slider x:Name="ZoomSlider" Width="160" Minimum="0.2" Maximum="1.5" Value="0.5" ValueChanged="Zoom_Changed" VerticalAlignment="Center" Focusable="False"/>
+                    </StackPanel>
+                    <ScrollViewer x:Name="ImageScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Focusable="False">
+                        <Image x:Name="PageImage" Stretch="None" HorizontalAlignment="Left" VerticalAlignment="Top">
+                            <Image.LayoutTransform>
+                                <ScaleTransform x:Name="ImageScale" ScaleX="0.5" ScaleY="0.5"/>
+                            </Image.LayoutTransform>
+                        </Image>
+                    </ScrollViewer>
+                </DockPanel>
+            </Border>
+
+            <StackPanel Grid.Column="1">
+                <TextBlock Text="Реестровый номер" FontWeight="SemiBold" Margin="0,0,0,6"/>
+                <Grid Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition x:Name="VolColumn" Width="*"/>
+                        <ColumnDefinition Width="1.4*"/>
+                    </Grid.ColumnDefinitions>
+                    <StackPanel Grid.Column="0" Margin="0,0,6,0">
+                        <TextBlock Text="Год" Foreground="{StaticResource TextMuted}"/>
+                        <TextBox x:Name="YearBox" FontSize="18" MaxLength="4" Padding="4,3" GotFocus="Box_GotFocus"/>
+                    </StackPanel>
+                    <StackPanel x:Name="VolPanel" Grid.Column="1" Margin="0,0,6,0">
+                        <TextBlock Text="Реестр" Foreground="{StaticResource TextMuted}"/>
+                        <TextBox x:Name="VolBox" FontSize="18" MaxLength="3" Padding="4,3" GotFocus="Box_GotFocus"/>
+                    </StackPanel>
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="Номер" Foreground="{StaticResource TextMuted}"/>
+                        <TextBox x:Name="NumBox" FontSize="18" MaxLength="10" Padding="4,3" GotFocus="Box_GotFocus"
+                                 ToolTip="Цифры, а при необходимости буква и тире: 37 или В-37"/>
+                    </StackPanel>
+                </Grid>
+                <TextBlock x:Name="PreviewName" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,4" TextWrapping="Wrap"/>
+                <TextBlock x:Name="ErrorText" Foreground="{StaticResource Danger}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+                <TextBlock x:Name="CandidatesHeader" Text="Варианты, которые прочитала программа:" Foreground="{StaticResource TextMuted}" Margin="0,8,0,4" TextWrapping="Wrap"/>
+                <ListBox x:Name="CandidatesList" MaxHeight="170" Focusable="False" SelectionChanged="Candidate_Selected"/>
+                <TextBlock Foreground="{StaticResource TextMuted}" TextWrapping="Wrap" Margin="0,14,0,0"
+                           Text="В поле «Номер» можно вводить цифры, буквы и тире, например 37 или В-37. Ctrl + ← и Ctrl + → переключают файлы."/>
+            </StackPanel>
+        </Grid>
+
+        <DockPanel Grid.Row="3" Margin="0,10,0,0">
+            <Button DockPanel.Dock="Left" Content="Пропустить файл" Click="Skip_Click" Focusable="False"/>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Закрыть" Click="Close_Click" Focusable="False"/>
+                <Button x:Name="SaveButton" Content="Сохранить и далее (Enter)" Style="{StaticResource PrimaryButton}" IsDefault="True" Margin="0" Click="Save_Click"/>
+            </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
