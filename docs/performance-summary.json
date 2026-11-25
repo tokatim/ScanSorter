@@ -1,0 +1,53 @@
+{
+  "date": "2026-11-25",
+  "baseline_commit": "9300ea0b300aa6cc72650656fa8163167609d267",
+  "logical_processors": 4,
+  "workers": 3,
+  "baseline": {
+    "files": 42,
+    "seconds": 214.39,
+    "cpu_seconds": 433.52,
+    "allocated_mib": 3970.8,
+    "peak_working_set_mib": 568.2,
+    "confident_results": 35
+  },
+  "optimized": {
+    "files": 42,
+    "seconds": 136.27,
+    "cpu_seconds": 308.75,
+    "allocated_mib": 1864.9,
+    "peak_working_set_mib": 571.6,
+    "confident_results": 36
+  },
+  "elapsed_reduction_percent": 36.4,
+  "allocated_reduction_percent": 53.0,
+  "previously_confident_regressions": 0,
+  "confident_mismatches_in_labelled_set": 0,
+  "synthetic_checks_passed": 55,
+  "subset_18_files": {
+    "baseline_workers_3": {
+      "files": 18,
+      "seconds": 95.06,
+      "cpu_seconds": 193.58,
+      "allocated_mib": 1718.6,
+      "peak_working_set_mib": 531.9,
+      "confident_results": 15
+    },
+    "optimized_workers_3": {
+      "files": 18,
+      "seconds": 72.98,
+      "cpu_seconds": 158.81,
+      "allocated_mib": 884.8,
+      "peak_working_set_mib": 580.0,
+      "confident_results": 15
+    },
+    "optimized_workers_2": {
+      "files": 18,
+      "seconds": 101.04,
+      "cpu_seconds": 151.02,
+      "allocated_mib": 882.5,
+      "peak_working_set_mib": 458.1,
+      "confident_results": 15
+    }
+  }
+}

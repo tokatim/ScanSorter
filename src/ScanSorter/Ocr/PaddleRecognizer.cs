@@ -24,7 +24,7 @@ public sealed class PaddleRecognizer
             ?? throw new InvalidOperationException("В программу не встроена модель распознавания.");
         using var ms = new MemoryStream();
         res.CopyTo(ms);
-        var options = new SessionOptions { IntraOpNumThreads = 1, InterOpNumThreads = 1, GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL };
+        using var options = new SessionOptions { IntraOpNumThreads = 1, InterOpNumThreads = 1, GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL };
         _session = new InferenceSession(ms.ToArray(), options);
         _input = _session.InputMetadata.Keys.First();
         var chars = _session.ModelMetadata.CustomMetadataMap["character"].Split('\n');
@@ -40,17 +40,19 @@ public sealed class PaddleRecognizer
         var resized = Resize(gray, width, height, nw, Height);
 
         var tensor = new DenseTensor<float>(new[] { 1, 3, Height, nw });
-        for (int y = 0; y < Height; y++)
-            for (int x = 0; x < nw; x++)
-            {
-                float v = (resized[y * nw + x] / 255f - 0.5f) / 0.5f;
-                tensor[0, 0, y, x] = v; tensor[0, 1, y, x] = v; tensor[0, 2, y, x] = v;
-            }
+        var values = tensor.Buffer.Span;
+        int plane = Height * nw;
+        for (int i = 0; i < plane; i++)
+        {
+            float v = (resized[i] / 255f - 0.5f) / 0.5f;
+            values[i] = v; values[plane + i] = v; values[2 * plane + i] = v;
+        }
 
         using var results = _session.Run(new[] { NamedOnnxValue.CreateFromTensor(_input, tensor) });
         var output = results.First().AsTensor<float>();                       // 1 × T × C
         int steps = output.Dimensions[1], classes = output.Dimensions[2];
 
+        ReadOnlySpan<float> scores = output is DenseTensor<float> dense ? dense.Buffer.Span : output.ToArray();
         var sb = new System.Text.StringBuilder();
         int prev = 0;
         for (int t = 0; t < steps; t++)
@@ -58,7 +60,7 @@ public sealed class PaddleRecognizer
             int best = 0; float bestV = float.MinValue;
             for (int c = 0; c < classes; c++)
             {
-                float v = output[0, t, c];
+                float v = scores[t * classes + c];
                 if (v > bestV) { bestV = v; best = c; }
             }
             if (best != prev && best != 0 && best < _charset.Length) sb.Append(_charset[best]);
@@ -72,14 +74,21 @@ public sealed class PaddleRecognizer
     {
         var dst = new byte[dw * dh];
         double sx = (double)sw / dw, sy = (double)sh / dh;
+        var starts = new int[dw];
+        var ends = new int[dw];
+        for (int x = 0; x < dw; x++)
+        {
+            double begin = x * sx;
+            starts[x] = (int)begin;
+            ends[x] = Math.Min(sw, Math.Max(starts[x] + 1, (int)Math.Ceiling(Math.Min(sw, begin + sx))));
+        }
         for (int oy = 0; oy < dh; oy++)
         {
             double fy0 = oy * sy, fy1 = Math.Min(sh, fy0 + sy);
             int y0 = (int)fy0, y1 = Math.Max(y0 + 1, (int)Math.Ceiling(fy1));
             for (int ox = 0; ox < dw; ox++)
             {
-                double fx0 = ox * sx, fx1 = Math.Min(sw, fx0 + sx);
-                int x0 = (int)fx0, x1 = Math.Max(x0 + 1, (int)Math.Ceiling(fx1));
+                int x0 = starts[ox], x1 = ends[ox];
                 int sum = 0, n = 0;
                 for (int y = y0; y < Math.Min(y1, sh); y++)
                 {

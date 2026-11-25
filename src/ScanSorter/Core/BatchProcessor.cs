@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Collections.Concurrent;
 using ScanSorter.Config;
 using ScanSorter.Ocr;
@@ -18,7 +19,7 @@ public sealed class BatchProcessor
     public const int PagesToSearch = 4;
 
     private readonly int _workers;
-    public BatchProcessor(int workers) => _workers = Math.Max(1, workers);
+    public BatchProcessor(int workers) => _workers = WorkerPolicy.Resolve(workers);
 
     /// <summary>Обрабатывает файлы. Возвращает после последнего или после отмены (файлы в работе дорабатываются).</summary>
     public void Run(IReadOnlyList<BatchItem> items, RunOptions options, IProgress<int> progress, CancellationToken ct)
@@ -29,11 +30,15 @@ public sealed class BatchProcessor
         int workers = Math.Min(_workers, Math.Max(1, queue.Count));
         if (done > 0) progress.Report(done);
 
+        if (queue.IsEmpty) return;
+        ct.ThrowIfCancellationRequested();
+        Log.Info($"Обработка: файлов {queue.Count}, потоков {workers}");
+
         // каждому потоку нужен свой движок распознавания (движок не потокобезопасен)
         var readers = new RegNumberReader?[workers];
-        Parallel.For(0, workers, i => readers[i] = new RegNumberReader());
         try
         {
+            Parallel.For(0, workers, i => readers[i] = new RegNumberReader());
             var tasks = Enumerable.Range(0, workers).Select(w => Task.Run(() =>
             {
                 var reader = readers[w]!;
@@ -55,14 +60,19 @@ public sealed class BatchProcessor
     {
         item.Status = ItemStatus.Processing;
         item.Note = "";
+        item.Search = null;
+        var total = Stopwatch.StartNew();
         try
         {
+            var opening = Stopwatch.StartNew();
             using var pdf = PdfSource.Open(item.SourcePath);
+            opening.Stop();
             item.PageCount = pdf.PageCount;
             if (pdf.PageCount == 0) { Fail(item, "в файле нет страниц"); return; }
 
             var found = reader.Find(pdf.PageCount, i => pdf.RenderJpeg(i), PagesToSearch, options.NoVolume, ct);
             item.Search = found;
+            found.Timings.Record("pdf-open", opening.Elapsed.TotalMilliseconds);
             Log.Info($"{item.FileName}: найден={found.Best != null}, уверенно={found.Sure}, {found.Elapsed.TotalSeconds:0.0} с");
 
             if (found.Best == null) { NeedsReview(item, "номер не найден"); return; }
@@ -70,13 +80,20 @@ public sealed class BatchProcessor
 
             int? year = found.Best.Year ?? options.ManualYear;
             if (year == null) { NeedsReview(item, "в номере нет года (старый формат), укажите год"); return; }
+            var saving = Stopwatch.StartNew();
             Save(item, new RegNumber(year, found.Best.Vol, found.Best.Num), options.OutputDir);
+            found.Timings.Record("save-verify", saving.Elapsed.TotalMilliseconds);
         }
         catch (OperationCanceledException) { item.Status = ItemStatus.Pending; }
         catch (Exception ex)
         {
             Log.Error("Обработка " + item.FileName, ex);
             Fail(item, "не удалось прочитать PDF (" + ex.Message + ")");
+        }
+        finally
+        {
+            if (item.Search is { } result)
+                Log.Info(FormattableString.Invariant($"Этапы: total={total.Elapsed.TotalMilliseconds:F0}ms; {result.Timings.ToLogString()}"));
         }
     }
 

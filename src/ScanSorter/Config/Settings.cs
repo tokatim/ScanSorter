@@ -15,7 +15,7 @@ public sealed class Settings
     /// <summary>Сколько файлов обрабатывать одновременно (0 = автоматически по числу ядер).</summary>
     public int Workers { get; set; }
 
-    public int WorkerCount => Workers > 0 ? Math.Min(Workers, 8) : Math.Clamp(Environment.ProcessorCount - 1, 1, 4);
+    public int WorkerCount => WorkerPolicy.Resolve(Workers);
 
     private static readonly JsonSerializerOptions Options = new()
     {

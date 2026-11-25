@@ -5,7 +5,7 @@
 | Компонент | Лицензия / сведения |
 |---|---|
 | Tesseract .NET wrapper 5.2.0, Charles Weld | Apache-2.0; https://github.com/charlesw/tesseract |
-| Tesseract OCR и русский словарь tessdata | Apache-2.0; https://github.com/tesseract-ocr/tessdata |
+| Tesseract OCR и русские модели tessdata / tessdata_fast | Apache-2.0; https://github.com/tesseract-ocr/tessdata и https://github.com/tesseract-ocr/tessdata_fast |
 | Leptonica | BSD; см. third-party/Leptonica-BSD.txt |
 | PaddleOCR / PP-OCRv5, модель распознавания | Apache-2.0; https://github.com/PaddlePaddle/PaddleOCR |
 | RapidOCR, распространение ONNX-моделей | Apache-2.0; https://github.com/RapidAI/RapidOCR |

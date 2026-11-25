@@ -28,3 +28,5 @@ samples*/
 *.suo
 release/
 artifacts/
+
+benchmark-results/

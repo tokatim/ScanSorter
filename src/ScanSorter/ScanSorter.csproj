@@ -12,7 +12,7 @@
     <AssemblyName>ScanSorter</AssemblyName>
     <RootNamespace>ScanSorter</RootNamespace>
     <ApplicationTitle>Сортировщик сканов</ApplicationTitle>
-    <Version>0.3.0</Version>
+    <Version>0.4.0-perf.1</Version>
     <ApplicationIcon>app.ico</ApplicationIcon>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <DebugType>None</DebugType>
@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="tessdata\rus.traineddata" LogicalName="rus.traineddata" />
+    <EmbeddedResource Include="tessdata/rus_fast.traineddata" LogicalName="rus_fast.traineddata" />
     <EmbeddedResource Include="models/paddle_rec.onnx" LogicalName="paddle_rec.onnx" />
   </ItemGroup>
 
